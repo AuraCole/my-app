@@ -13,36 +13,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo
+      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
       # 2. Debug - list repo contents
       - name: Debug - list repo files
         run: |
-          echo "📂 Listing current directory contents:"
-          ls -al
-          echo "🔍 Looking for frontend directory specifically:"
-          ls -al frontend || echo "⚠️ frontend directory NOT found!"
+          echo "📂 Listing repo structure:"
+          ls -R
 
-      # 3. Set up Docker Buildx
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      # 4. Log in to DockerHub (optional, remove if not pushing images)
-      - name: Log in to DockerHub
+      # 3. Log in to GHCR
+      - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
-      # 5. Build Docker image
-      - name: Build Docker image
+      # 4. Build & Push Backend (Spring Boot)
+      - name: Build & Push Backend
         run: |
-          echo "🐳 Building Docker image..."
-          docker build -t myapp:latest .
+          echo "🐳 Building Backend..."
+          docker build -f backend/Dockerfile -t ghcr.io/${{ secrets.GHCR_USERNAME }}/myapp-backend:latest ./backend
+          echo "📤 Pushing Backend..."
+          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/myapp-backend:latest
 
-      # 6. Run container for testing
-      - name: Run container for testing
+      # 5. Build & Push Frontend (React)
+      - name: Build & Push Frontend
         run: |
-          docker run --rm myapp:latest echo "✅ Container built and ran successfully!"
+          echo "🐳 Building Frontend..."
+          docker build -f frontend/Dockerfile -t ghcr.io/${{ secrets.GHCR_USERNAME }}/myapp-frontend:latest ./frontend
+          echo "📤 Pushing Frontend..."
+          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/myapp-frontend:latest
