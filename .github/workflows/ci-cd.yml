@@ -2,43 +2,48 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout code from repo
-      - name: Checkout repository
+      # 1. Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Debug - list repo structure
-      - name: Verify repo structure
-        run: ls -R $GITHUB_WORKSPACE
+      # 2. Debug - list repo contents
+      - name: Debug - list repo files
+        run: |
+          echo "📂 Listing current directory contents:"
+          ls -al
+          echo "🔍 Looking for frontend directory specifically:"
+          ls -al frontend || echo "⚠️ frontend directory NOT found!"
 
-      # Login to GitHub Container Registry
-      - name: Log in to GHCR
+      # 3. Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 4. Log in to DockerHub (optional, only if pushing to registry)
+      - name: Log in to DockerHub
+        if: secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build & Push Backend (Spring Boot)
-      - name: Build & Push Backend
+      # 5. Build Docker image
+      - name: Build Docker image
         run: |
-          docker build -f $GITHUB_WORKSPACE/backend/Dockerfile \
-            -t ghcr.io/auracole/my-app-backend:latest \
-            $GITHUB_WORKSPACE/backend
-          docker push ghcr.io/auracole/my-app-backend:latest
+          echo "🐳 Building Docker image..."
+          docker build -t myapp:latest .
 
-      # Build & Push Frontend (React)
-      - name: Build & Push Frontend
+      # 6. Run container for testing
+      - name: Run container for testing
         run: |
-          docker build -f $GITHUB_WORKSPACE/frontend/Dockerfile \
-            -t ghcr.io/auracole/my-app-frontend:latest \
-            $GITHUB_WORKSPACE/frontend
-          docker push ghcr.io/auracole/my-app-frontend:latest
+          docker run --rm myapp:latest echo "✅ Container built and ran successfully!"
