@@ -1,0 +1,21 @@
+# Maven build
+backend/target/
+
+# Node modules and build outputs
+frontend/node_modules/
+frontend/build/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor settings
+.vscode/
+.idea/
+
+# Env files
+.env
